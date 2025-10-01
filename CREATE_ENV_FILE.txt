@@ -1,0 +1,74 @@
+═══════════════════════════════════════════════════════════════
+  HOW TO CREATE .env FILE (Windows)
+═══════════════════════════════════════════════════════════════
+
+METHOD 1: Using Notepad (Easiest)
+──────────────────────────────────────────────────────────────
+1. Open Notepad (search "Notepad" in Windows)
+
+2. Copy and paste this template:
+
+VITE_FIREBASE_API_KEY=your-api-key-here
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
+
+3. Replace the values with YOUR Firebase config from:
+   https://console.firebase.google.com/
+   → Project Settings → Your apps → Web
+
+4. Click File → Save As
+
+5. Important settings:
+   - File name: .env (include the dot!)
+   - Save as type: All Files (*)
+   - Location: C:\Users\admin\Desktop\CMS\
+   
+6. Click Save
+
+═══════════════════════════════════════════════════════════════
+
+METHOD 2: Using VS Code (If you have it)
+──────────────────────────────────────────────────────────────
+1. In VS Code, right-click in file explorer
+2. Click "New File"
+3. Name it: .env
+4. Paste the template above
+5. Replace with your Firebase values
+6. Save (Ctrl+S)
+
+═══════════════════════════════════════════════════════════════
+
+METHOD 3: Using Command Prompt
+──────────────────────────────────────────────────────────────
+1. Open Command Prompt in project folder
+2. Run: echo. > .env
+3. Then open .env in Notepad and add your config
+
+═══════════════════════════════════════════════════════════════
+
+✅ VERIFY IT WORKED:
+──────────────────────────────────────────────────────────────
+Run this command in your project folder:
+  node check-setup.js
+
+If successful, you'll see:
+  ✅ All Firebase config keys are set
+  🚀 Run: npm run dev
+
+═══════════════════════════════════════════════════════════════
+
+⚠️ COMMON MISTAKES:
+──────────────────────────────────────────────────────────────
+❌ File named "env.txt" or ".env.txt" 
+   → Must be exactly: .env (no extension)
+
+❌ Saved in wrong folder
+   → Must be in: C:\Users\admin\Desktop\CMS\
+
+❌ Left placeholder values like "your-api-key-here"
+   → Must use REAL values from Firebase Console
+
+═══════════════════════════════════════════════════════════════

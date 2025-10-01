@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS Setup - Quick Links</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .step {
+            background: #f7f7f7;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .step-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #5568d3;
+        }
+        .btn-secondary {
+            background: #48bb78;
+        }
+        .btn-secondary:hover {
+            background: #38a169;
+        }
+        .info {
+            background: #e6f7ff;
+            border-left: 4px solid #1890ff;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .checklist {
+            margin-top: 10px;
+        }
+        .checklist label {
+            display: block;
+            margin: 8px 0;
+            cursor: pointer;
+        }
+        .checklist input[type="checkbox"] {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Customer Management System</h1>
+        <p class="subtitle">Quick Setup Links - Follow these steps in order</p>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">1</span>
+                Create Firebase Project
+            </div>
+            <div class="checklist">
+                <label><input type="checkbox"> Create new project</label>
+                <label><input type="checkbox"> Enable Phone Authentication</label>
+                <label><input type="checkbox"> Create Firestore Database</label>
+            </div>
+            <a href="https://console.firebase.google.com/" target="_blank" class="btn">
+                Open Firebase Console →
+            </a>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">2</span>
+                Get Firebase Config
+            </div>
+            <div class="checklist">
+                <label><input type="checkbox"> Go to Project Settings</label>
+                <label><input type="checkbox"> Add Web App</label>
+                <label><input type="checkbox"> Copy firebaseConfig values</label>
+            </div>
+            <p style="margin-top: 10px; color: #666; font-size: 14px;">
+                After creating project, click ⚙️ → Project Settings → Your apps → Web
+            </p>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">3</span>
+                Create .env File
+            </div>
+            <div class="checklist">
+                <label><input type="checkbox"> Open Notepad</label>
+                <label><input type="checkbox"> Paste Firebase config</label>
+                <label><input type="checkbox"> Save as ".env" in project folder</label>
+            </div>
+            <a href="file:///C:/Users/admin/Desktop/CMS/CREATE_ENV_FILE.txt" class="btn btn-secondary">
+                View Instructions →
+            </a>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">4</span>
+                Install Firebase CLI & Deploy
+            </div>
+            <div class="checklist">
+                <label><input type="checkbox"> npm install -g firebase-tools</label>
+                <label><input type="checkbox"> firebase login</label>
+                <label><input type="checkbox"> firebase init</label>
+                <label><input type="checkbox"> firebase deploy --only firestore:rules</label>
+            </div>
+        </div>
+
+        <div class="info">
+            <strong>📖 Need detailed help?</strong><br>
+            Open <strong>SETUP_GUIDE.md</strong> in your project folder for step-by-step instructions.
+        </div>
+
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="file:///C:/Users/admin/Desktop/CMS/SETUP_GUIDE.md" class="btn btn-secondary">
+                📖 Open Setup Guide
+            </a>
+            <a href="file:///C:/Users/admin/Desktop/CMS/CHECKLIST.txt" class="btn">
+                ✅ View Checklist
+            </a>
+        </div>
+    </div>
+</body>
+</html>
