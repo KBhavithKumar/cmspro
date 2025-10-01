@@ -1,6 +1,6 @@
 // Data shapes used across the app
 // Customer: stores profile and current balances summary
-// LedgerEntry: normalized transactions with type 'due' or 'credit'
+// LedgerEntry: normalized transactions with type 'credit' or 'debit'
 
 export const Collections = {
   Customers: 'customers',
@@ -14,9 +14,9 @@ export function newCustomerPartial() {
     village: '',
     karkaana: '',
     // denormalized summary fields for quick listing
-    totalDue: 0,
-    totalCredit: 0,
-    balance: 0, // positive means customer owes (due - credit)
+    totalCredit: 0,      // Total orders placed (amount owed)
+    totalDebit: 0,       // Total payments received (amount paid)
+    balance: 0,          // Outstanding amount (totalCredit - totalDebit)
     createdAt: Date.now(),
     updatedAt: Date.now(),
   }
@@ -25,7 +25,7 @@ export function newCustomerPartial() {
 export function newLedgerEntryPartial() {
   return {
     customerId: '',
-    type: 'due', // 'due' | 'credit'
+    type: 'credit', // 'credit' (customer owes) | 'debit' (payment received)
     amount: 0,
     note: '',
     createdAt: Date.now(),

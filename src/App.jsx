@@ -1,30 +1,51 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import { useRef } from 'react'
 import Sidebar from './components/Sidebar'
 import ModernNavbar from './components/ModernNavbar'
+import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
 import Customers from './pages/Customers'
 import CustomerForm from './pages/CustomerForm'
 import CustomerDetails from './pages/CustomerDetails'
 import Dues from './pages/Dues'
+import CollectionDay from './pages/CollectionDay'
 import AdvancedAnalytics from './pages/AdvancedAnalytics'
 import EmailCustomers from './pages/EmailCustomers'
 import Reports from './pages/Reports'
+import Profile from './pages/Profile'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import NotFound from './pages/NotFound'
-import LoadingSpinner from './components/LoadingSpinner'
 import { useAuthState } from './firebase/auth'
-import { toastConfig } from './utils/theme'
+import { toastConfig } from './config/toast'
+import { LanguageProvider } from './context/LanguageContext'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuthState()
-  if (loading) return <LoadingSpinner fullScreen message="Checking authentication..." />
-  return user ? children : <Navigate to="/login" replace />
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    )
+  }
+  
+  if (!user) {
+    return <Login />
+  }
+  
+  return children
 }
 
 function AppLayout({ children }) {
   const { user } = useAuthState()
+  const sidebarRef = useRef(null)
+  
+  const handleMenuClick = () => {
+    sidebarRef.current?.toggle()
+  }
   
   if (!user) {
     return <div className="min-h-screen bg-gray-50">{children}</div>
@@ -32,20 +53,22 @@ function AppLayout({ children }) {
   
   return (
     <div className="min-h-screen bg-gray-50">
-      <Sidebar />
-      <ModernNavbar />
-      <main className="lg:ml-64 mt-16 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
-          {children}
-        </div>
-      </main>
+      <Sidebar ref={sidebarRef} />
+      <div className="lg:ml-64 min-h-screen transition-all duration-300">
+        <ModernNavbar onMenuClick={handleMenuClick} />
+        <main className="pt-24 px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6 lg:px-8 lg:py-8">
+          <div className="max-w-7xl mx-auto w-full">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   )
 }
 
 export default function App() {
   return (
-    <>
+    <LanguageProvider>
       <Toaster 
         position={toastConfig.position}
         toastOptions={{
@@ -61,92 +84,131 @@ export default function App() {
           loading: toastConfig.loading,
         }}
       />
-      <AppLayout>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <AppLayout>
                 <Dashboard />
-              </PrivateRoute>
-            }
-          />
+              </AppLayout>
+            </PrivateRoute>
+          }
+        />
 
-          <Route
-            path="/customers"
-            element={
-              <PrivateRoute>
+        <Route
+          path="/customers"
+          element={
+            <PrivateRoute>
+              <AppLayout>
                 <Customers />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/customers/new"
-            element={
-              <PrivateRoute>
+              </AppLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/customers/new"
+          element={
+            <PrivateRoute>
+              <AppLayout>
                 <CustomerForm />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/customers/:id"
-            element={
-              <PrivateRoute>
+              </AppLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/customers/:id"
+          element={
+            <PrivateRoute>
+              <AppLayout>
                 <CustomerDetails />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/customers/:id/edit"
-            element={
-              <PrivateRoute>
+              </AppLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/customers/:id/edit"
+          element={
+            <PrivateRoute>
+              <AppLayout>
                 <CustomerForm />
-              </PrivateRoute>
-            }
-          />
+              </AppLayout>
+            </PrivateRoute>
+          }
+        />
 
-          <Route
-            path="/dues"
-            element={
-              <PrivateRoute>
+        <Route
+          path="/dues"
+          element={
+            <PrivateRoute>
+              <AppLayout>
                 <Dues />
-              </PrivateRoute>
-            }
-          />
+              </AppLayout>
+            </PrivateRoute>
+          }
+        />
 
-          <Route
-            path="/advanced-analytics"
-            element={
-              <PrivateRoute>
+        <Route
+          path="/collection-day"
+          element={
+            <PrivateRoute>
+              <AppLayout>
+                <CollectionDay />
+              </AppLayout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/advanced-analytics"
+          element={
+            <PrivateRoute>
+              <AppLayout>
                 <AdvancedAnalytics />
-              </PrivateRoute>
-            }
-          />
+              </AppLayout>
+            </PrivateRoute>
+          }
+        />
 
-          <Route
-            path="/email-customers"
-            element={
-              <PrivateRoute>
+        <Route
+          path="/email-customers"
+          element={
+            <PrivateRoute>
+              <AppLayout>
                 <EmailCustomers />
-              </PrivateRoute>
-            }
-          />
+              </AppLayout>
+            </PrivateRoute>
+          }
+        />
 
-          <Route
-            path="/reports"
-            element={
-              <PrivateRoute>
+        <Route
+          path="/reports"
+          element={
+            <PrivateRoute>
+              <AppLayout>
                 <Reports />
-              </PrivateRoute>
-            }
-          />
+              </AppLayout>
+            </PrivateRoute>
+          }
+        />
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AppLayout>
-    </>
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <AppLayout>
+                <Profile />
+              </AppLayout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </LanguageProvider>
   )
 }

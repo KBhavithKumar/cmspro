@@ -122,6 +122,15 @@ export default function Customers() {
       return
     }
 
+    // Validate: Debit cannot exceed available Credit
+    if (transactionForm.type === 'debit') {
+      const currentBalance = transactionModal.customer.balance || 0
+      if (Number(transactionForm.amount) > currentBalance) {
+        toast.error(`Payment cannot exceed outstanding balance of ${formatCurrency(currentBalance)}`)
+        return
+      }
+    }
+
     const loadingToast = toast.loading('Adding transaction...')
 
     try {
@@ -192,11 +201,11 @@ export default function Customers() {
           <div className="text-3xl font-bold text-blue-900">{stats.total}</div>
         </div>
         <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-5 border border-red-200">
-          <div className="text-sm font-medium text-red-600 mb-1">Total Due</div>
+          <div className="text-sm font-medium text-red-600 mb-1">Total Credit (Owed)</div>
           <div className="text-3xl font-bold text-red-900">{formatCurrency(stats.totalDue)}</div>
         </div>
         <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 border border-green-200">
-          <div className="text-sm font-medium text-green-600 mb-1">Total Credit</div>
+          <div className="text-sm font-medium text-green-600 mb-1">Total Debit (Paid)</div>
           <div className="text-3xl font-bold text-green-900">{formatCurrency(stats.totalCredit)}</div>
         </div>
         <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-5 border border-purple-200">
@@ -305,8 +314,8 @@ export default function Customers() {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Location</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Due</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Credit</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Credit (Owed)</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Debit (Paid)</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Balance</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                 </tr>
@@ -332,7 +341,7 @@ export default function Customers() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                         {formatCurrency(customer.totalDue || 0)}
                       </span>
                     </td>
@@ -371,29 +380,29 @@ export default function Customers() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Transaction Type</label>
             <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setTransactionForm(f => ({ ...f, type: 'due' }))}
-                className={`px-4 py-3 rounded-lg border-2 transition-all ${
-                  transactionForm.type === 'due'
-                    ? 'border-red-500 bg-red-50 text-red-700'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div className="font-semibold">Due</div>
-                <div className="text-xs text-gray-500">Customer owes</div>
-              </button>
               <button
                 onClick={() => setTransactionForm(f => ({ ...f, type: 'credit' }))}
                 className={`px-4 py-3 rounded-lg border-2 transition-all ${
                   transactionForm.type === 'credit'
-                    ? 'border-green-500 bg-green-50 text-green-700'
+                    ? 'border-orange-500 bg-orange-50 text-orange-700'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
                 <div className="font-semibold">Credit</div>
-                <div className="text-xs text-gray-500">Customer paid</div>
+                <div className="text-xs text-gray-500">Customer owes more</div>
+              </button>
+              <button
+                onClick={() => setTransactionForm(f => ({ ...f, type: 'debit' }))}
+                className={`px-4 py-3 rounded-lg border-2 transition-all ${
+                  transactionForm.type === 'debit'
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="font-semibold">Debit</div>
+                <div className="text-xs text-gray-500">Payment received</div>
               </button>
             </div>
           </div>
@@ -410,8 +419,8 @@ export default function Customers() {
             />
           </div>
           
-          {/* Payment Mode - Only show for Credit (payment received) */}
-          {transactionForm.type === 'credit' && (
+          {/* Payment Mode - Only show for Debit (payment received) */}
+          {transactionForm.type === 'debit' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Payment Mode</label>
               <div className="grid grid-cols-2 gap-3">

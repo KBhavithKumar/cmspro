@@ -111,6 +111,7 @@ export default function CustomerForm() {
     try {
       const cleanedForm = {
         name: form.name.trim(),
+        email: form.email.trim(),
         phoneNo: form.phoneNo.trim(),
         village: form.village.trim(),
         karkaana: form.karkaana.trim(),

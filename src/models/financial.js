@@ -1,21 +1,18 @@
-// Updated Financial Model
-// Total = Amount to be paid (total outstanding)
-// Credit = Additional order payment amount (added by admin)
-// Debit = Amount given (payment received)
+// Simplified Financial Model - Only Credit & Debit
+// Credit: Amount customer owes (orders placed)
+// Debit: Amount customer paid
 
 export const FinancialTransactionModel = {
   id: '',
   transactionId: '', // TXN-000001
   customerId: '',
   customerName: '',
-  type: '', // 'credit' (order added) or 'debit' (payment received)
+  type: '', // 'credit' or 'debit' only
   amount: 0,
-  orderId: '', // Optional: linked order
-  paymentMethod: '', // cash, card, upi, bank
   note: '',
   createdAt: null,
   createdBy: '',
-  
+
   // Balance tracking
   previousBalance: 0,
   newBalance: 0
@@ -29,12 +26,12 @@ export const CustomerFinancialModel = {
   mobileNo: '',
   village: '',
   karkaana: '',
-  
-  // Financial fields (updated terminology)
-  totalCredit: 0,      // Total additional orders (amount to be paid)
-  totalDebit: 0,       // Total payments received (amount given)
+
+  // Financial fields - simplified
+  totalCredit: 0,      // Total orders placed (amount owed)
+  totalDebit: 0,       // Total payments received (amount paid)
   balance: 0,          // Outstanding amount (totalCredit - totalDebit)
-  
+
   createdAt: null,
   updatedAt: null,
   createdBy: '',

@@ -2,10 +2,84 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow all authenticated users to read and write
-    // Admin checks are handled in the application layer
+    
+    // Helper functions for security
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function validateString(value, maxLength) {
+      return value is string && 
+             value.size() > 0 && 
+             value.size() <= maxLength;
+    }
+    
+    function validateNumber(value, min, max) {
+      return value is number && 
+             value >= min && 
+             value <= max;
+    }
+    
+    // Customers collection - only authenticated users can read, only admins can write
+    match /customers/{customerId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+    
+    // Ledger collection - only authenticated users can read, only admins can create
+    match /ledger/{entryId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                      (request.resource.data.type == 'credit' || request.resource.data.type == 'debit') &&
+                      request.resource.data.amount >= 1 && // Minimum amount is 1
+                      request.resource.data.amount <= 10000000;
+      allow update, delete: if false; // Ledger entries are immutable
+    }
+    
+    // Admins collection - only readable by authenticated users
+    match /admins/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admins can only be managed through Firebase Console
+    }
+    
+    // Orders collection
+    match /orders/{orderId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() &&
+                      validateString(request.resource.data.customerId, 100) &&
+                      validateNumber(request.resource.data.total, 0, 10000000);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Reports collection
+    match /reports/{reportId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if false; // Reports are immutable
+      allow delete: if isAuthenticated(); // Authenticated users can delete reports
+    }
+    
+    // Users collection - for profile data
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId; // Users can only update their own profile
+    }
+    
+    // Deny all other paths
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }

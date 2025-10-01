@@ -1,21 +1,24 @@
-import { collection, addDoc, doc, getDoc, getDocs, orderBy, query, updateDoc, where, writeBatch } from 'firebase/firestore'
+import { collection, addDoc, doc, getDoc, getDocs, query, where, updateDoc, deleteDoc, orderBy } from 'firebase/firestore'
 import { db } from '../firebase/app'
 import { Collections } from '../models/types'
+import { sanitizeCustomerData, sanitizeSearchQuery } from '../utils/security'
 
 const customersCol = collection(db, Collections.Customers)
 
 export async function createCustomer(payload) {
-  const now = Date.now()
+  // Sanitize input data to prevent injection attacks
+  const sanitized = sanitizeCustomerData(payload)
   
+  const now = Date.now()
   // Get count for customer ID
   const snapshot = await getDocs(customersCol)
   const customerId = `CUST-${String(snapshot.size + 1).padStart(4, '0')}`
   
   const data = { 
-    ...payload, 
+    ...sanitized, 
     customerId,
-    totalDue: 0, 
     totalCredit: 0, 
+    totalDebit: 0, 
     balance: 0, 
     createdAt: now, 
     updatedAt: now,
@@ -29,8 +32,11 @@ export async function createCustomer(payload) {
 }
 
 export async function updateCustomer(id, payload) {
+  // Sanitize input data
+  const sanitized = sanitizeCustomerData(payload)
+  
   const ref = doc(db, Collections.Customers, id)
-  const data = { ...payload, updatedAt: Date.now() }
+  const data = { ...sanitized, updatedAt: Date.now() }
   await updateDoc(ref, data)
 }
 

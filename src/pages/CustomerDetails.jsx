@@ -15,13 +15,18 @@ export default function CustomerDetails() {
   const { user } = useAuthState()
   const { isAdmin } = useIsAdmin()
 
-  const [customer, setCustomer] = useState(null)
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
   
   // Transaction form
   const [showTransactionModal, setShowTransactionModal] = useState(false)
-  const [transactionForm, setTransactionForm] = useState({ type: 'due', amount: '', note: '' })
+  const [transactionForm, setTransactionForm] = useState({
+    type: 'credit',
+    amount: '',
+    note: '',
+    paymentMode: 'cash',
+    utrNo: ''
+  })
   
   // Custom modals
   const [modal, setModal] = useState({ isOpen: false, type: 'success', title: '', message: '' })
@@ -83,6 +88,22 @@ export default function CustomerDetails() {
       return
     }
 
+    // Validate: 1 <= Debit <= Credit (Balance)
+    if (transactionForm.type === 'debit') {
+      const debitAmount = Number(transactionForm.amount)
+      const currentBalance = customer.balance || 0
+      
+      if (debitAmount < 1) {
+        toast.error('Payment amount must be at least ₹1')
+        return
+      }
+      
+      if (debitAmount > currentBalance) {
+        toast.error(`Payment cannot exceed outstanding balance of ${formatCurrency(currentBalance)}`)
+        return
+      }
+    }
+
     const savingToast = toast.loading('Adding transaction...')
     
     try {
@@ -91,24 +112,26 @@ export default function CustomerDetails() {
         type: transactionForm.type,
         amount: Number(transactionForm.amount),
         note: transactionForm.note,
+        paymentMode: transactionForm.type === 'debit' ? transactionForm.paymentMode : undefined,
+        utrNo: transactionForm.type === 'debit' && transactionForm.paymentMode === 'online' ? transactionForm.utrNo : undefined,
         createdBy: user?.uid
       })
 
       toast.success('Transaction added successfully!', { id: savingToast })
       setShowTransactionModal(false)
-      setTransactionForm({ type: 'due', amount: '', note: '' })
+      setTransactionForm({ type: 'credit', amount: '', note: '' })
       
       // Show success modal
       setModal({
         isOpen: true,
         type: 'success',
         title: 'Transaction Added!',
-        message: `${transactionForm.type === 'due' ? 'Due' : 'Credit'} of ${formatCurrency(transactionForm.amount)} has been recorded.`
       })
       
       loadData()
     } catch (error) {
       toast.error('Failed to add transaction: ' + error.message, { id: savingToast })
+      console.error('Add transaction error:', error)
     }
   }
 
@@ -172,16 +195,16 @@ export default function CustomerDetails() {
         {/* Balance Summary */}
         <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200">
           <div className="text-center">
-            <div className="text-sm text-gray-500 mb-1">Total Due</div>
-            <div className="text-2xl font-bold text-error">{formatCurrency(customer.totalDue || 0)}</div>
+            <div className="text-sm text-gray-500 mb-1">Total Credit (Owed)</div>
+            <div className="text-2xl font-bold text-orange-600">{formatCurrency(customer.totalDue || 0)}</div>
           </div>
           <div className="text-center">
-            <div className="text-sm text-gray-500 mb-1">Total Credit</div>
-            <div className="text-2xl font-bold text-success">{formatCurrency(customer.totalCredit || 0)}</div>
+            <div className="text-sm text-gray-500 mb-1">Total Debit (Paid)</div>
+            <div className="text-2xl font-bold text-green-600">{formatCurrency(customer.totalCredit || 0)}</div>
           </div>
           <div className="text-center">
             <div className="text-sm text-gray-500 mb-1">Balance</div>
-            <div className={`text-2xl font-bold ${customer.balance >= 0 ? 'text-success' : 'text-error'}`}>
+            <div className={`text-2xl font-bold ${customer.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {formatCurrency(customer.balance || 0)}
             </div>
           </div>
@@ -210,9 +233,9 @@ export default function CustomerDetails() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      transaction.type === 'due' ? 'bg-error/10 text-error' : 'bg-success/10 text-success'
+                      transaction.type === 'credit' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'
                     }`}>
-                      {transaction.type === 'due' ? (
+                      {transaction.type === 'credit' ? (
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
@@ -224,7 +247,7 @@ export default function CustomerDetails() {
                     </div>
                     <div>
                       <div className="font-medium text-gray-900">
-                        {transaction.type === 'due' ? 'Due Added' : 'Payment Received'}
+                        {transaction.type === 'credit' ? 'Order Added (Credit)' : 'Payment Received (Debit)'}
                       </div>
                       {transaction.note && (
                         <div className="text-sm text-gray-500 mt-0.5">{transaction.note}</div>
@@ -233,11 +256,11 @@ export default function CustomerDetails() {
                         {formatDate(transaction.createdAt)}
                       </div>
                     </div>
-                  </div>
-                  <div className={`text-xl font-bold ${
-                    transaction.type === 'due' ? 'text-error' : 'text-success'
-                  }`}>
-                    {transaction.type === 'due' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                    <div className={`text-xl font-bold ${
+                      transaction.type === 'credit' ? 'text-orange-600' : 'text-green-600'
+                    }`}>
+                      {transaction.type === 'credit' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -255,33 +278,33 @@ export default function CustomerDetails() {
               <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900">Add Transaction</h3>
               </div>
-              
+
               <div className="p-6 space-y-4">
                 {/* Type Selection */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Transaction Type</label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
-                      onClick={() => setTransactionForm(f => ({ ...f, type: 'due' }))}
-                      className={`px-4 py-3 rounded-xl border-2 transition-all ${
-                        transactionForm.type === 'due'
-                          ? 'border-error bg-error/5 text-error'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="font-semibold">Due</div>
-                      <div className="text-xs text-gray-500">Customer owes</div>
-                    </button>
-                    <button
                       onClick={() => setTransactionForm(f => ({ ...f, type: 'credit' }))}
                       className={`px-4 py-3 rounded-xl border-2 transition-all ${
                         transactionForm.type === 'credit'
-                          ? 'border-success bg-success/5 text-success'
+                          ? 'border-orange-500 bg-orange-50 text-orange-700'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
                       <div className="font-semibold">Credit</div>
-                      <div className="text-xs text-gray-500">Customer paid</div>
+                      <div className="text-xs text-gray-500">Customer owes more</div>
+                    </button>
+                    <button
+                      onClick={() => setTransactionForm(f => ({ ...f, type: 'debit' }))}
+                      className={`px-4 py-3 rounded-xl border-2 transition-all ${
+                        transactionForm.type === 'debit'
+                          ? 'border-green-500 bg-green-50 text-green-700'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="font-semibold">Debit</div>
+                      <div className="text-xs text-gray-500">Payment received</div>
                     </button>
                   </div>
                 </div>

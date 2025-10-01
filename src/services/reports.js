@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, query, where, orderBy } from 'firebase/firestore'
+import { collection, addDoc, getDocs, query, where, orderBy, doc, deleteDoc } from 'firebase/firestore'
 import { db } from '../firebase/app'
 import { listCustomers } from './customers'
 
@@ -79,28 +79,28 @@ export async function generateReport(reportType, startDate, endDate) {
       .map(doc => ({ id: doc.id, ...doc.data() }))
       .filter(o => o.createdAt >= startDate && o.createdAt <= endDate)
 
-    // Calculate summary
-    const activeCustomers = customers.filter(c => c.isActive).length
-    const totalCredit = customers.reduce((sum, c) => sum + (c.totalCredit || 0), 0)
-    const totalDebit = customers.reduce((sum, c) => sum + (c.totalDebit || 0), 0)
-    const totalBalance = totalCredit - totalDebit
+    // Calculate summary - ensure all values are defined
+    const activeCustomers = customers.filter(c => c.isActive === true).length || 0
+    const totalCredit = customers.reduce((sum, c) => sum + (Number(c.totalCredit) || 0), 0) || 0
+    const totalDebit = customers.reduce((sum, c) => sum + (Number(c.totalDebit) || 0), 0) || 0
+    const totalBalance = (totalCredit - totalDebit) || 0
 
-    const completedOrders = orders.filter(o => o.status === 'completed').length
-    const pendingOrders = orders.filter(o => o.status === 'pending').length
+    const completedOrders = orders.filter(o => o.status === 'completed').length || 0
+    const pendingOrders = orders.filter(o => o.status === 'pending').length || 0
 
-    // Top customers by balance
+    // Top customers by balance - ensure no undefined values
     const topCustomers = [...customers]
-      .sort((a, b) => (b.balance || 0) - (a.balance || 0))
+      .sort((a, b) => (Number(b.balance) || 0) - (Number(a.balance) || 0))
       .slice(0, 10)
       .map(c => ({
-        customerId: c.customerId,
-        name: c.name,
-        balance: c.balance || 0,
-        totalCredit: c.totalCredit || 0,
-        totalDebit: c.totalDebit || 0
+        customerId: c.customerId || '',
+        name: c.name || 'Unknown',
+        balance: Number(c.balance) || 0,
+        totalCredit: Number(c.totalCredit) || 0,
+        totalDebit: Number(c.totalDebit) || 0
       }))
 
-    // Village-wise summary
+    // Village-wise summary - ensure no undefined
     const villageStats = {}
     customers.forEach(c => {
       const village = c.village || 'Unknown'
@@ -113,45 +113,45 @@ export async function generateReport(reportType, startDate, endDate) {
         }
       }
       villageStats[village].customerCount++
-      villageStats[village].totalBalance += c.balance || 0
-      villageStats[village].totalCredit += c.totalCredit || 0
-      villageStats[village].totalDebit += c.totalDebit || 0
+      villageStats[village].totalBalance += Number(c.balance) || 0
+      villageStats[village].totalCredit += Number(c.totalCredit) || 0
+      villageStats[village].totalDebit += Number(c.totalDebit) || 0
     })
 
-    // Transaction summary
-    const creditTransactions = transactions.filter(t => t.type === 'credit')
-    const debitTransactions = transactions.filter(t => t.type === 'debit')
-    const totalCreditAmount = creditTransactions.reduce((sum, t) => sum + t.amount, 0)
-    const totalDebitAmount = debitTransactions.reduce((sum, t) => sum + t.amount, 0)
+    // Transaction summary - ensure no undefined
+    const creditTransactions = transactions.filter(t => t.type === 'credit') || []
+    const debitTransactions = transactions.filter(t => t.type === 'debit') || []
+    const totalCreditAmount = creditTransactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0) || 0
+    const totalDebitAmount = debitTransactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0) || 0
 
-    // Create report
+    // Create report - ensure no undefined values
     const report = {
-      reportId,
-      reportType,
-      startDate,
-      endDate,
+      reportId: reportId || '',
+      reportType: reportType || 'daily',
+      startDate: startDate || Date.now(),
+      endDate: endDate || Date.now(),
       
       summary: {
-        totalCustomers: customers.length,
-        activeCustomers,
-        totalCredit,
-        totalDebit,
-        totalBalance,
-        totalOrders: orders.length,
-        completedOrders,
-        pendingOrders,
-        totalTransactions: transactions.length,
-        creditTransactions: creditTransactions.length,
-        debitTransactions: debitTransactions.length,
-        totalCreditAmount,
-        totalDebitAmount
+        totalCustomers: customers.length || 0,
+        activeCustomers: activeCustomers || 0,
+        totalCredit: totalCredit || 0,
+        totalDebit: totalDebit || 0,
+        totalBalance: totalBalance || 0,
+        totalOrders: orders.length || 0,
+        completedOrders: completedOrders || 0,
+        pendingOrders: pendingOrders || 0,
+        totalTransactions: transactions.length || 0,
+        creditTransactions: creditTransactions.length || 0,
+        debitTransactions: debitTransactions.length || 0,
+        totalCreditAmount: totalCreditAmount || 0,
+        totalDebitAmount: totalDebitAmount || 0
       },
       
-      topCustomers,
-      villageStats,
+      topCustomers: topCustomers || [],
+      villageStats: villageStats || {},
       
       generatedAt: Date.now(),
-      generatedBy: 'system'
+      generatedBy: null
     }
 
     // Save report
@@ -199,6 +199,18 @@ export async function exportReportToPDF(reportId) {
   // This will be implemented with PDF generation library
   console.log('Export report to PDF:', reportId)
   // TODO: Implement PDF export
+}
+
+// Delete report
+export async function deleteReport(reportId) {
+  try {
+    const reportRef = doc(db, 'reports', reportId)
+    await deleteDoc(reportRef)
+    return true
+  } catch (error) {
+    console.error('Failed to delete report:', error)
+    throw error
+  }
 }
 
 // Export report to Excel
